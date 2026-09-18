@@ -18,11 +18,10 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from math import inf
-from xxlimited_35 import Null
 
 from grid import GridProblem, State
 
+import heapq
 
 @dataclass
 class SearchResult:
@@ -87,26 +86,6 @@ def _reconstruct_path(
 
 
 def bfs(problem: GridProblem) -> SearchResult:
-    """
-    Breadth-First Search.
-
-    Requirements
-    ------------
-    - Use a FIFO frontier.
-    - Search by increasing path depth.
-    - Do not use terrain costs to choose the next frontier state.
-    - Avoid repeatedly discovering the same state.
-    - Stop when the goal is removed from the frontier.
-    - Report the ACTUAL traversal cost of the returned path.
-    - Count expanded states exactly as defined in the assignment.
-
-    Returns
-    -------
-    SearchResult
-        path, total path cost, and number of expanded states.
-
-    TODO: Implement this function.
-    """
     start: State = problem.start
     goal: State = problem.goal
     frontier: deque[State] = deque([start])
@@ -137,30 +116,46 @@ def bfs(problem: GridProblem) -> SearchResult:
 
 
 def ucs(problem: GridProblem) -> SearchResult:
-    """
-    Uniform Cost Search.
+    start: State = problem.start
+    goal: State = problem.goal
+    counter: int = 0
+    frontier: list[tuple[int, int, State]] = [(0,counter,start)]
+    counter += 1
+    heapq.heapify(frontier)
+    came_from: dict[State, State | None] = {start: None}
+    g_cost: dict[State, int] = {start: 0}
+    nodes_expanded: int = 0
+    found: bool = False
 
-    Requirements
-    ------------
-    - Use heapq as a priority queue.
-    - Priority is g(n).
-    - Maintain the best known g-value for every discovered state.
-    - If a cheaper path to a state is found, update it and push a new entry.
-    - Ignore stale queue entries without counting them as expanded.
-    - Break equal-priority ties by insertion order.
-    - Stop when the goal is removed from the frontier with its best known cost.
+    while frontier:
+        g_val, _, cur_state = heapq.heappop(frontier)
 
-    Suggested priority-queue entry:
-        (priority, counter, state)
+        if cur_state in g_cost and g_cost[cur_state] < g_val:
+            continue
 
-    Returns
-    -------
-    SearchResult
-        path, optimal path cost, and number of expanded states.
+        if problem.is_goal(cur_state):
+            found = True
+            break
 
-    TODO: Implement this function.
-    """
-    raise NotImplementedError("TODO: implement ucs")
+        for neighbor in problem.neighbors(cur_state):
+            if neighbor not in g_cost:
+                g_cost[neighbor] = g_cost[cur_state] + problem.step_cost(neighbor)
+                heapq.heappush(frontier, (g_cost[neighbor], counter, neighbor))
+                came_from[neighbor] = cur_state
+                counter += 1
+            elif g_cost[neighbor] > (g_cost[cur_state] + problem.step_cost(neighbor)):
+                g_cost[neighbor] = g_cost[cur_state] + problem.step_cost(neighbor)
+                heapq.heappush(frontier, (g_cost[neighbor], counter, neighbor))
+                came_from[neighbor] = cur_state
+                counter += 1
+        nodes_expanded += 1
+
+    if not found:
+        return SearchResult.failure(nodes_expanded)
+
+    path: list[State] = _reconstruct_path(came_from, start, goal)
+    cost: float | int = problem.path_cost(path)
+    return SearchResult(path, cost, nodes_expanded)
 
 
 def manhattan(state: State, goal: State) -> int:
