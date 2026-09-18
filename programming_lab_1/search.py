@@ -159,14 +159,7 @@ def ucs(problem: GridProblem) -> SearchResult:
 
 
 def manhattan(state: State, goal: State) -> int:
-    """
-    Return Manhattan distance between state and goal.
-
-        h(n) = |row_n - row_goal| + |col_n - col_goal|
-
-    TODO: Implement this function.
-    """
-    raise NotImplementedError("TODO: implement manhattan")
+    return abs(state[0] - goal[0]) + abs(state[1] - goal[1])
 
 
 def astar(problem: GridProblem) -> SearchResult:
