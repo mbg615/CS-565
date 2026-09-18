@@ -16,11 +16,12 @@ Do not change the required function names or parameter lists.
 
 from __future__ import annotations
 
-from collections import deque
 from dataclasses import dataclass
+from math import inf
 
 from grid import GridProblem, State
 
+from collections import deque
 import heapq
 
 @dataclass
@@ -138,14 +139,10 @@ def ucs(problem: GridProblem) -> SearchResult:
             break
 
         for neighbor in problem.neighbors(cur_state):
-            if neighbor not in g_cost:
-                g_cost[neighbor] = g_cost[cur_state] + problem.step_cost(neighbor)
-                heapq.heappush(frontier, (g_cost[neighbor], counter, neighbor))
-                came_from[neighbor] = cur_state
-                counter += 1
-            elif g_cost[neighbor] > (g_cost[cur_state] + problem.step_cost(neighbor)):
-                g_cost[neighbor] = g_cost[cur_state] + problem.step_cost(neighbor)
-                heapq.heappush(frontier, (g_cost[neighbor], counter, neighbor))
+            tentative_g = g_cost[cur_state] + problem.step_cost(neighbor)
+            if neighbor not in g_cost or tentative_g < g_cost[neighbor]:
+                g_cost[neighbor] = tentative_g
+                heapq.heappush(frontier, (tentative_g, counter, neighbor))
                 came_from[neighbor] = cur_state
                 counter += 1
         nodes_expanded += 1
@@ -163,30 +160,6 @@ def manhattan(state: State, goal: State) -> int:
 
 
 def astar(problem: GridProblem) -> SearchResult:
-    """
-    A* Search using Manhattan distance.
-
-    Requirements
-    ------------
-    - Use heapq as a priority queue.
-    - Priority is f(n) = g(n) + h(n).
-    - Use manhattan(state, problem.goal) for h(n).
-    - Maintain the best known g-value for every discovered state.
-    - If a cheaper path to a state is found, update it and push a new entry.
-    - Ignore stale queue entries without counting them as expanded.
-    - Break equal-priority ties by insertion order.
-    - Stop when the goal is removed from the frontier with its best known cost.
-
-    Suggested priority-queue entry:
-        (priority, counter, state)
-
-    Returns
-    -------
-    SearchResult
-        path, optimal path cost, and number of expanded states.
-
-    TODO: Implement this function.
-    """
     start: State = problem.start
     goal: State = problem.goal
     counter: int = 0
@@ -211,15 +184,10 @@ def astar(problem: GridProblem) -> SearchResult:
             break
 
         for neighbor in problem.neighbors(cur_state):
-            if neighbor not in f_cost:
-                g_cost[neighbor] = g_cost[cur_state] + problem.step_cost(neighbor)
-                f_cost[neighbor] = g_cost[neighbor] + manhattan(neighbor, goal)
-                heapq.heappush(frontier, (f_cost[neighbor], counter, neighbor))
-                came_from[neighbor] = cur_state
-                counter += 1
-            elif f_cost[neighbor] > g_cost[cur_state] + problem.step_cost(neighbor) + manhattan(neighbor, goal):
-                g_cost[neighbor] = g_cost[cur_state] + problem.step_cost(neighbor)
-                f_cost[neighbor] = g_cost[neighbor] + manhattan(neighbor, goal)
+            tentative_g = g_cost[cur_state] + problem.step_cost(neighbor)
+            if neighbor not in g_cost or tentative_g < g_cost[neighbor]:
+                g_cost[neighbor] = tentative_g
+                f_cost[neighbor] = tentative_g + manhattan(neighbor, goal)
                 heapq.heappush(frontier, (f_cost[neighbor], counter, neighbor))
                 came_from[neighbor] = cur_state
                 counter += 1
