@@ -119,7 +119,7 @@ def ucs(problem: GridProblem) -> SearchResult:
     start: State = problem.start
     goal: State = problem.goal
     counter: int = 0
-    frontier: list[tuple[int, int, State]] = [(0,counter,start)]
+    frontier: list[tuple[int, int, State]] = [(0, counter, start)]
     counter += 1
     heapq.heapify(frontier)
     came_from: dict[State, State | None] = {start: None}
@@ -187,4 +187,47 @@ def astar(problem: GridProblem) -> SearchResult:
 
     TODO: Implement this function.
     """
-    raise NotImplementedError("TODO: implement astar")
+    start: State = problem.start
+    goal: State = problem.goal
+    counter: int = 0
+    s_heuristic: int = manhattan(start, goal)
+    frontier: list[tuple[int, int, State]] = [(s_heuristic, counter, start)]
+    counter += 1
+    heapq.heapify(frontier)
+    came_from: dict[State, State | None] = {start: None}
+    g_cost: dict[State, int] = {start: 0}
+    f_cost: dict[State, int] = {start: s_heuristic}
+    nodes_expanded: int = 0
+    found: bool = False
+
+    while frontier:
+        f_val, _, cur_state = heapq.heappop(frontier)
+
+        if cur_state in f_cost and f_cost[cur_state] < f_val:
+            continue
+
+        if problem.is_goal(cur_state):
+            found = True
+            break
+
+        for neighbor in problem.neighbors(cur_state):
+            if neighbor not in f_cost:
+                g_cost[neighbor] = g_cost[cur_state] + problem.step_cost(neighbor)
+                f_cost[neighbor] = g_cost[neighbor] + manhattan(neighbor, goal)
+                heapq.heappush(frontier, (f_cost[neighbor], counter, neighbor))
+                came_from[neighbor] = cur_state
+                counter += 1
+            elif f_cost[neighbor] > g_cost[cur_state] + problem.step_cost(neighbor) + manhattan(neighbor, goal):
+                g_cost[neighbor] = g_cost[cur_state] + problem.step_cost(neighbor)
+                f_cost[neighbor] = g_cost[neighbor] + manhattan(neighbor, goal)
+                heapq.heappush(frontier, (f_cost[neighbor], counter, neighbor))
+                came_from[neighbor] = cur_state
+                counter += 1
+        nodes_expanded += 1
+
+    if not found:
+        return SearchResult.failure(nodes_expanded)
+
+    path: list[State] = _reconstruct_path(came_from, start, goal)
+    cost: float | int = problem.path_cost(path)
+    return SearchResult(path, cost, nodes_expanded)
