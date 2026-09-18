@@ -16,6 +16,7 @@ Do not change the required function names or parameter lists.
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 from math import inf
 from xxlimited_35 import Null
@@ -73,14 +74,16 @@ def _reconstruct_path(
     start: State,
     goal: State,
 ) -> list[State]:
-    """
-    Reconstruct a path from start to goal using parent pointers.
 
-    The returned path must include both start and goal.
-
-    TODO: Implement this function.
-    """
-    raise NotImplementedError("TODO: implement _reconstruct_path")
+    reconstructed_path: list[State] = []
+    cur = goal
+    while True:
+        if cur is None:
+            break
+        reconstructed_path.append(cur)
+        cur = came_from[cur]
+    reconstructed_path.reverse()
+    return reconstructed_path
 
 
 def bfs(problem: GridProblem) -> SearchResult:
@@ -104,7 +107,33 @@ def bfs(problem: GridProblem) -> SearchResult:
 
     TODO: Implement this function.
     """
-    raise NotImplementedError("TODO: implement bfs")
+    start: State = problem.start
+    goal: State = problem.goal
+    frontier: deque[State] = deque([start])
+    visited: set[State] = {start}
+    came_from: dict[State, State | None] = {start: None}
+    nodes_expanded: int = 0
+    found: bool = False
+
+    while frontier:
+        cur_state: State = frontier.popleft()
+        if problem.is_goal(cur_state):
+            found = True
+            break
+
+        for neighbor in problem.neighbors(cur_state):
+            if neighbor not in visited:
+                visited.add(neighbor)
+                frontier.append(neighbor)
+                came_from[neighbor] = cur_state
+        nodes_expanded += 1
+
+    if not found:
+        return SearchResult.failure(nodes_expanded)
+
+    path: list[State] = _reconstruct_path(came_from, start, goal)
+    cost: float | int = problem.path_cost(path)
+    return SearchResult(path, cost, nodes_expanded)
 
 
 def ucs(problem: GridProblem) -> SearchResult:
