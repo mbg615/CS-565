@@ -117,6 +117,43 @@ def minimax(game: TicTacToe, state: State) -> SearchResult:
     return SearchResult(value, action, counters[0], counters[1], 0)
 
 
+def _alphabeta(game: TicTacToe, state: State, alpha: float, beta: float, counters: list[int]):
+    counters[0] += 1
+    if game.terminal(state):
+        counters[1] += 1
+        return game.utility(state), None
+
+    current_player = game.player(state)
+    best_action = None
+
+    if current_player == X:
+        best_value = -float("inf")
+    else:
+        best_value = float("inf")
+
+    actions = game.actions(state)
+
+    for i, action in enumerate(actions):
+        child = game.result(state, action)
+        child_val, _ = _alphabeta(game, child, alpha, beta ,counters)
+        if current_player == X:
+            if child_val > best_value:
+                best_value = child_val
+                alpha = max(alpha, best_value)
+                best_action = action
+        else:
+            if child_val < best_value:
+                best_value = child_val
+                beta = min(beta, best_value)
+                best_action = action
+
+        if alpha >= beta:
+            if i < len(actions) - 1:
+                counters[2] += 1
+            break
+
+    return best_value, best_action
+
 def alphabeta(game: TicTacToe, state: State) -> SearchResult:
     """
     Compute the exact Minimax value and optimal action using Alpha-Beta pruning.
@@ -137,7 +174,7 @@ def alphabeta(game: TicTacToe, state: State) -> SearchResult:
     - Correctly report nodes_visited, terminal_evaluations, and cutoffs.
 
     You may add private helper functions above or below this function.
-
-    TODO: Implement this function.
     """
-    raise NotImplementedError("TODO: implement alphabeta")
+    counters: list[int] = [0, 0, 0]
+    value, action = _alphabeta(game, state, -float("inf"), float("inf"), counters)
+    return SearchResult(value, action, counters[0], counters[1], counters[2])
