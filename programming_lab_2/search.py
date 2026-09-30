@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from tic_tac_toe import Action, State, TicTacToe
+from tic_tac_toe import Action, State, TicTacToe, X, O
 
 
 @dataclass
@@ -62,6 +62,35 @@ class SearchResult:
     cutoffs: int
 
 
+def _minimax(game: TicTacToe, state: State, counters: list[int]):
+    counters[0] += 1
+    if game.terminal(state):
+        counters[1] += 1
+        return game.utility(state), None
+
+    current_player = game.player(state)
+    best_action = None
+
+    if current_player == X:
+        best_value = -float("inf")
+    else:
+        best_value = float("inf")
+
+    for action in game.actions(state):
+        child = game.result(state, action)
+        child_val, _ = _minimax(game, child, counters)
+        if current_player == X:
+            if child_val > best_value:
+                best_value = child_val
+                best_action = action
+        else:
+            if child_val < best_value:
+                best_value = child_val
+                best_action = action
+
+    return best_value, best_action
+
+
 def minimax(game: TicTacToe, state: State) -> SearchResult:
     """
     Compute the exact Minimax value and optimal action for state.
@@ -82,9 +111,10 @@ def minimax(game: TicTacToe, state: State) -> SearchResult:
 
     You may add private helper functions above or below this function.
 
-    TODO: Implement this function.
     """
-    raise NotImplementedError("TODO: implement minimax")
+    counters: list[int] = [0, 0]
+    value, action = _minimax(game, state, counters)
+    return SearchResult(value, action, counters[0], counters[1], 0)
 
 
 def alphabeta(game: TicTacToe, state: State) -> SearchResult:
