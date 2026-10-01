@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from tic_tac_toe import Action, State, TicTacToe, X, O
+from tic_tac_toe import Action, State, TicTacToe, X
 
 
 @dataclass
@@ -110,7 +110,6 @@ def minimax(game: TicTacToe, state: State) -> SearchResult:
     - Return cutoffs=0.
 
     You may add private helper functions above or below this function.
-
     """
     counters: list[int] = [0, 0]
     value, action = _minimax(game, state, counters)
@@ -153,6 +152,7 @@ def _alphabeta(game: TicTacToe, state: State, alpha: float, beta: float, counter
             break
 
     return best_value, best_action
+
 
 def alphabeta(game: TicTacToe, state: State) -> SearchResult:
     """
